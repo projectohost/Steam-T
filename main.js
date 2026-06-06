@@ -40,8 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   let balance = 230;
-  let cart = [];
-  let fav = [];
+let cart = [];
+let purchased = [];
+let fav = [];
 
   const grid = document.querySelector(".game-grid");
   const popup = document.getElementById("popup");
@@ -69,34 +70,28 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== BUY =====
   window.buy = function(uid){
-    const g = games.find(x => x.uid === uid);
-    if(!g) return;
+  const g = games.find(x => x.uid === uid);
+  if(!g) return;
 
-    if(g.price > balance){
-      show("❌ Нет денег");
-      return;
-    }
-
-    balance -= g.price;
-    cart.push(g);
-
-    update();
-    show("Куплено: " + g.title);
+  if(purchased.includes(uid)){
+    show("⚠️ Эта игра уже куплена");
+    return;
   }
 
-  // ===== FAV =====
-  window.addFav = function(uid){
-    const g = games.find(x => x.uid === uid);
-
-    if(!fav.some(x => x.uid === uid)){
-      fav.push(g);
-    }
-
-    update();
-    show("❤️ Добавлено");
+  if(g.price > balance){
+    show("❌ Нет денег");
+    return;
   }
+
+  balance -= g.price;
+
+  cart.push(g);
+  purchased.push(uid);
+
+  update();
+  show("Куплено: " + g.title);
+}
 
   // ===== GAME MODAL =====
   window.openGame = function(uid){
