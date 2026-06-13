@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const games = [];
 
   for (let i = 0; i < steamGames.length; i++) {
-    const g = steamGames[i % steamGames.length];
+    const g = steamGames[i];
 
     games.push({
       uid: i + 1,
@@ -40,9 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   let balance = 230;
-let cart = [];
-let purchased = [];
-let fav = [];
+  let cart = [];
+  let purchased = [];
+  let fav = JSON.parse(localStorage.getItem("fav")) || [];
 
   const grid = document.querySelector(".game-grid");
   const popup = document.getElementById("popup");
@@ -70,28 +70,50 @@ let fav = [];
     });
   }
 
+  // ===== BUY =====
   window.buy = function(uid){
-  const g = games.find(x => x.uid === uid);
-  if(!g) return;
+    const g = games.find(x => x.uid === uid);
 
-  if(purchased.includes(uid)){
-    show("⚠️ Эта игра уже куплена");
-    return;
+    if(!g) return;
+
+    if(purchased.includes(uid)){
+      show("⚠️ Эта игра уже куплена");
+      return;
+    }
+
+    if(g.price > balance){
+      show("❌ Нет денег");
+      return;
+    }
+
+    balance -= g.price;
+
+    cart.push(g);
+    purchased.push(uid);
+
+    update();
+    show("Куплено: " + g.title);
   }
 
-  if(g.price > balance){
-    show("❌ Нет денег");
-    return;
+  // ===== FAVORITES =====
+  window.addFav = function(uid){
+
+    const g = games.find(x => x.uid === uid);
+
+    if(!g) return;
+
+    if(fav.some(x => x.uid === uid)){
+      show("❤️ Уже в избранном");
+      return;
+    }
+
+    fav.push(g);
+
+    localStorage.setItem("fav", JSON.stringify(fav));
+
+    update();
+    show("❤️ Добавлено в избранное");
   }
-
-  balance -= g.price;
-
-  cart.push(g);
-  purchased.push(uid);
-
-  update();
-  show("Куплено: " + g.title);
-}
 
   // ===== GAME MODAL =====
   window.openGame = function(uid){
@@ -107,14 +129,33 @@ let fav = [];
     document.getElementById("modal").classList.add("hidden");
   }
 
-  // ===== FAVORITES =====
+  // ===== FAVORITES MODAL =====
   window.openFav = function(){
+
     const box = document.getElementById("favList");
-    box.innerHTML = fav.length
-      ? fav.map(g => `<p>${g.title} - $${g.price}</p>`).join("")
-      : "<p>Пусто 😢</p>";
+
+    if(fav.length === 0){
+      box.innerHTML = "<p>Пусто 😢</p>";
+    } else {
+      box.innerHTML = fav.map(g => `
+        <p>
+          ${g.title} - $${g.price}
+          <button onclick="removeFav(${g.uid})">❌</button>
+        </p>
+      `).join("");
+    }
 
     document.getElementById("favModal").classList.remove("hidden");
+  }
+
+  window.removeFav = function(uid){
+
+    fav = fav.filter(g => g.uid !== uid);
+
+    localStorage.setItem("fav", JSON.stringify(fav));
+
+    update();
+    openFav();
   }
 
   window.closeFav = function(){
@@ -123,7 +164,9 @@ let fav = [];
 
   // ===== CART =====
   window.openCart = function(){
+
     const box = document.getElementById("cartList");
+
     box.innerHTML = cart.length
       ? cart.map(g => `<p>${g.title} - $${g.price}</p>`).join("")
       : "<p>Корзина пустая 🛒</p>";
@@ -145,13 +188,21 @@ let fav = [];
   function show(text){
     popup.innerText = text;
     popup.style.opacity = 1;
-    setTimeout(()=>popup.style.opacity=0,1200);
+
+    setTimeout(() => {
+      popup.style.opacity = 0;
+    }, 1200);
   }
 
   // ===== SEARCH =====
   document.getElementById("search").addEventListener("input", (e)=>{
     const v = e.target.value.toLowerCase();
-    render(games.filter(g => g.title.toLowerCase().includes(v)));
+
+    render(
+      games.filter(g =>
+        g.title.toLowerCase().includes(v)
+      )
+    );
   });
 
   // ===== MUSIC =====
@@ -162,6 +213,8 @@ let fav = [];
 
   window.toggleMusic = function(){
 
+    if(!music) return;
+
     if(!musicOn){
       music.play();
       musicOn = true;
@@ -171,7 +224,6 @@ let fav = [];
       musicOn = false;
       btn.innerText = "🎵 Музыка: OFF";
     }
-
   };
 
   update();
