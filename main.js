@@ -264,4 +264,21 @@ document.addEventListener("DOMContentLoaded", () => {
   render(games);
   update();
 
+  window.aboutGameHub = function() {
+
+  alert(
+`🎮 GameHub
+
+Добро пожаловать в GameHub!
+
+Здесь можно:
+• Покупать игры
+• Добавлять игры в избранное
+• Искать игры через поиск
+
+Спасибо за использование GameHub! ❤️`
+  );
+
+};
+
 });

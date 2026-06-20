@@ -132,3 +132,22 @@ button{
 .hidden{
   display:none;
 }
+#homePage{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:20px;
+}
+
+#homePage h1{
+  font-size:50px;
+  color:#66c0f4;
+}
+
+#homePage button{
+  width:250px;
+  padding:15px;
+  font-size:18px;
+}
