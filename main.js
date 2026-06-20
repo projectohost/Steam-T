@@ -284,7 +284,7 @@ document.addEventListener("DOMContentLoaded", () => {
   render(games);
   update();
 
-  window.aboutGameHub = function() {
+window.aboutGameHub = function() {
 
   alert(
 `🎮 GameHub
