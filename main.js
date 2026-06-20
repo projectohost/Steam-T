@@ -47,6 +47,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const grid = document.querySelector(".game-grid");
   const popup = document.getElementById("popup");
 
+  // ===== PAGE NAVIGATION =====
+  // FIX: the HTML button calls openShop() on click, but this function
+  // never existed in the original script, so clicking "Войти в мини магазин"
+  // did nothing. This hides the home page and reveals the shop page.
+  window.openShop = function(){
+    const home = document.getElementById("homePage");
+    const shop = document.getElementById("shopPage");
+
+    if (home) home.style.display = "none";
+    if (shop) shop.style.display = "block";
+  }
+
+  window.openHome = function(){
+    const home = document.getElementById("homePage");
+    const shop = document.getElementById("shopPage");
+
+    if (shop) shop.style.display = "none";
+    if (home) home.style.display = "block";
+  }
+
   // ===== RENDER =====
   // FIX: previously used grid.innerHTML += templateString inside a forEach,
   // which re-parses the entire grid on every single card and destroys/recreates
