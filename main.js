@@ -205,28 +205,42 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   });
 
-  // ===== MUSIC =====
-  let musicOn = false;
+// ===== MUSIC =====
+let musicOn = false;
 
-  const music = document.getElementById("lobbyMusic");
-  const btn = document.getElementById("musicBtn");
+const music = document.getElementById("lobbyMusic");
+const btn = document.getElementById("musicBtn");
 
-  window.toggleMusic = function(){
+window.toggleMusic = function () {
 
-    if(!music) return;
+  if (!music) {
+    alert("Музыка не найдена!");
+    return;
+  }
 
-    if(!musicOn){
-      music.play();
+  if (!musicOn) {
+
+    music.volume = 0.5;
+
+    music.play().then(() => {
+
       musicOn = true;
       btn.innerText = "🎵 Музыка: ON";
-    } else {
-      music.pause();
-      musicOn = false;
-      btn.innerText = "🎵 Музыка: OFF";
-    }
-  };
 
-  update();
-  render();
+    }).catch(err => {
 
-});
+      console.error(err);
+      alert("Не удалось запустить музыку");
+
+    });
+
+  } else {
+
+    music.pause();
+
+    musicOn = false;
+
+    btn.innerText = "🎵 Музыка: OFF";
+  }
+};
+})
