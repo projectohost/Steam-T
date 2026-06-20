@@ -48,26 +48,42 @@ document.addEventListener("DOMContentLoaded", () => {
   const popup = document.getElementById("popup");
 
   // ===== RENDER =====
+  // FIX: previously used grid.innerHTML += templateString inside a forEach,
+  // which re-parses the entire grid on every single card and destroys/recreates
+  // every <img> tag each time. This caused images to flicker, fail to load,
+  // or never finish loading from Steam's CDN, especially with 10+ cards.
+  // Now we build the full HTML string once and set innerHTML a single time.
   function render(list = games){
-    grid.innerHTML = "";
+    grid.innerHTML = list.map(g => `
+      <div class="game-card" onclick="openGame(${g.uid})">
+        <img src="${g.img}" loading="lazy" alt="${g.title}">
+        <div class="game-info">
+          <h3>${g.title}</h3>
+          <p>${g.genre}</p>
+          <p>$${g.price}</p>
 
-    list.forEach(g => {
-      grid.innerHTML += `
-        <div class="game-card" onclick="openGame(${g.uid})">
-          <img src="${g.img}">
-          <div class="game-info">
-            <h3>${g.title}</h3>
-            <p>${g.genre}</p>
-            <p>$${g.price}</p>
-
-            <div class="bottom">
-              <button onclick="event.stopPropagation(); buy(${g.uid})">Купить</button>
-              <button onclick="event.stopPropagation(); addFav(${g.uid})">❤️</button>
-            </div>
+          <div class="bottom">
+            ${purchased.includes(g.uid)
+              ? `<button disabled>✅ Куплено</button>`
+              : `<button onclick="event.stopPropagation(); buy(${g.uid})">Купить</button>`
+            }
+            <button onclick="event.stopPropagation(); addFav(${g.uid})">❤️</button>
           </div>
         </div>
-      `;
-    });
+      </div>
+    `).join("");
+  }
+
+  // Keep track of the current search filter so we can re-render
+  // with the same filter applied after a purchase/favorite change.
+  let currentFilter = "";
+
+  function rerenderWithFilter(){
+    if (!currentFilter) {
+      render(games);
+    } else {
+      render(games.filter(g => g.title.toLowerCase().includes(currentFilter)));
+    }
   }
 
   // ===== BUY =====
@@ -92,6 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
     purchased.push(uid);
 
     update();
+    rerenderWithFilter(); // refresh card to show "Куплено" state
     show("Куплено: " + g.title);
   }
 
@@ -118,6 +135,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== GAME MODAL =====
   window.openGame = function(uid){
     const g = games.find(x => x.uid === uid);
+
+    if(!g) return;
 
     document.getElementById("modal").classList.remove("hidden");
     document.getElementById("mTitle").innerText = g.title;
@@ -196,51 +215,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== SEARCH =====
   document.getElementById("search").addEventListener("input", (e)=>{
-    const v = e.target.value.toLowerCase();
-
-    render(
-      games.filter(g =>
-        g.title.toLowerCase().includes(v)
-      )
-    );
+    currentFilter = e.target.value.toLowerCase();
+    rerenderWithFilter();
   });
 
-// ===== MUSIC =====
-let musicOn = false;
+  // ===== MUSIC =====
+  let musicOn = false;
 
-const music = document.getElementById("lobbyMusic");
-const btn = document.getElementById("musicBtn");
+  const music = document.getElementById("lobbyMusic");
+  const btn = document.getElementById("musicBtn");
 
-window.toggleMusic = function () {
+  window.toggleMusic = function () {
 
-  if (!music) {
-    alert("Музыка не найдена!");
-    return;
-  }
+    if (!music) {
+      alert("Музыка не найдена!");
+      return;
+    }
 
-  if (!musicOn) {
+    if (!musicOn) {
 
-    music.volume = 0.5;
+      music.volume = 0.5;
 
-    music.play().then(() => {
+      music.play().then(() => {
 
-      musicOn = true;
-      btn.innerText = "🎵 Музыка: ON";
+        musicOn = true;
+        btn.innerText = "🎵 Музыка: ON";
 
-    }).catch(err => {
+      }).catch(err => {
 
-      console.error(err);
-      alert("Не удалось запустить музыку");
+        console.error(err);
+        alert("Не удалось запустить музыку");
 
-    });
+      });
 
-  } else {
+    } else {
 
-    music.pause();
+      music.pause();
 
-    musicOn = false;
+      musicOn = false;
 
-    btn.innerText = "🎵 Музыка: OFF";
-  }
-};
-})
+      btn.innerText = "🎵 Музыка: OFF";
+    }
+  };
+
+  // ===== INITIAL RENDER =====
+  // FIX: original code never called render() on load, so the grid
+  // would stay empty until the user typed in the search box.
+  render(games);
+  update();
+
+});
